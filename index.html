@@ -3,7 +3,9 @@
     
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dat.gui/build/dat.gui.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
 
     <script>
 
@@ -27,9 +29,6 @@
         camera.lookAt(0, 1, 0);
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-        // ✅ Ambient Light เล็กน้อยให้สว่างรวม
-        const ambient = new THREE.AmbientLight(0x404040);
-        scene.add(ambient);
 
         scene.background = new THREE.Color(0x3B3B3f);
 
@@ -111,56 +110,75 @@
             console.error('Error loading OBJ:', error);
         });
  
-        // Lights
-        const light = new THREE.PointLight(0xffffff, 1);
-        light.position.set(1, 2, 1);
-        scene.add(light);
+        // ✅ แสง
+        const directionalLight = new THREE.DirectionalLight(0xffeedd, 0.9); // แสงทิศทาง
+        directionalLight.position.set(10, 5, 10);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
 
-        let transX = 0 , transY =0 , transZ = 0
+        const pointLight = new THREE.PointLight(0xffeedd,1);
+        pointLight.position.set(0, 0, 0);
+        pointLight.castShadow = true;
+        scene.add(pointLight);
 
+        const spotLight = new THREE.SpotLight(0xffeedd,1);
+        spotLight.position.set(0, 0, 0);
+        spotLight.castShadow = true;
+        scene.add(spotLight);
+
+        // ✅ เพิ่ม GUI สำหรับควบคุมแสง
+        const gui = new dat.GUI();
+        
+        // Directional Light
+        const directionalLightFolder = gui.addFolder('Directional Light');
+        directionalLightFolder.add(directionalLight, 'intensity', 0, 2);
+        directionalLightFolder.add(directionalLight.position, 'x', -100, 100);
+        directionalLightFolder.add(directionalLight.position, 'y', -100, 100);
+        directionalLightFolder.add(directionalLight.position, 'z', -100, 100);
+        directionalLightFolder.open();
+
+        // Point Light
+        const pointLightFolder = gui.addFolder('Point Light');
+        pointLightFolder.add(pointLight, 'intensity', 0, 2);
+        pointLightFolder.add(pointLight.position, 'x', -100, 100);
+        pointLightFolder.add(pointLight.position, 'y', -100, 100);
+        pointLightFolder.add(pointLight.position, 'z', -100, 100);
+        pointLightFolder.open();
+
+        // Spot Light
+        const spotLightFolder = gui.addFolder('Spot Light');
+        spotLightFolder.add(spotLight, 'intensity', 0, 2);
+        spotLightFolder.add(spotLight.position, 'x', -100, 100);
+        spotLightFolder.add(spotLight.position, 'y', -100, 100);
+        spotLightFolder.add(spotLight.position, 'z', -100, 100);
+        spotLightFolder.open();
+
+        // ✅ สร้าง PMREMGenerator
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+        pmremGenerator.compileEquirectangularShader();
+
+        // ✅ โหลด HDRI prison cell
+        const rgbeLoader = new THREE.RGBELoader();
+        rgbeLoader.setDataType(THREE.UnsignedByteType); 
+        rgbeLoader.load(
+            'https://raw.githubusercontent.com/Pongpanot99/Pongpanot99.github.io-Kafka/main/studio_small_08_2k.hdr', // 👈 เปลี่ยน path ตรงนี้ให้ตรงกับที่คุณเซฟไฟล์ไว้
+                (hdrTexture) => {
+            const envMap = pmremGenerator.fromEquirectangular(hdrTexture).texture;
+
+            scene.background = envMap;    // ทำให้เห็น HDRI
+            scene.environment = envMap;   // ใช้เป็น reflection ของวัสดุ
+            hdrTexture.dispose();
+            pmremGenerator.dispose();
+            }
+         );
 
         function animate() {
 
-            light.position.x += transX; 
-            light.position.y +=  transY; 
-            light.position.z += transZ
         
         renderer.render(scene, camera);
         requestAnimationFrame(animate);
     }
     animate();
-
-    window.addEventListener('keydown' , e=>{
-        switch(e.key){ 
-            case 'd' :
-            transX = 0.03
-            break ; 
-            case 'a' :
-            transX = -0.03
-            break ;
-            case 's' :
-            transZ = 0.03
-            break ;
-            case 'w' :
-            transZ = -0.03
-            break ;
-            case 'e'  :
-            transY = 0.03
-            break;
-            case 'q'  :
-            transY = -0.03
-            break;
-        }   
-    })
-    window.addEventListener('keyup' , e=>{
-       if(e.key==='w'||e.key==='s'){
-        transZ=0
-       }else if(e.key==='a'||e.key==='d'){
-        transX=0
-       }else if(e.key==='q' || e.key ==='e'){
-        transY =0 
-       }
-    })
 
     </script>
 </body>
