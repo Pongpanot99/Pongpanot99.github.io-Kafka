@@ -161,7 +161,7 @@
         const rgbeLoader = new THREE.RGBELoader();
         rgbeLoader.setDataType(THREE.UnsignedByteType); 
         rgbeLoader.load(
-            'https://raw.githubusercontent.com/Pongpanot99/Pongpanot99.github.io-Kafka/main/studio_small_08_2k.hdr', // 👈 เปลี่ยน path ตรงนี้ให้ตรงกับที่คุณเซฟไฟล์ไว้
+            'https://raw.githubusercontent.com/Pongpanot99/Pongpanot99.github.io-Kafka/main/studio_small_08_2k.hdr', 
                 (hdrTexture) => {
             const envMap = pmremGenerator.fromEquirectangular(hdrTexture).texture;
 
